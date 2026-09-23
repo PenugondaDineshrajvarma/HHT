@@ -15,6 +15,10 @@ const AuraApp = {
 
   /* PWA Service Worker & Install Prompt Registration */
   initPWA() {
+    if (localStorage.getItem('pwa-banner-dismissed') === 'true') {
+      return;
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
@@ -26,19 +30,28 @@ const AuraApp = {
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       this.deferredInstallPrompt = e;
-      const pwaBanner = document.getElementById('pwa-install-banner');
-      if (pwaBanner) {
-        pwaBanner.style.display = 'flex';
+      if (localStorage.getItem('pwa-banner-dismissed') !== 'true') {
+        const pwaBanner = document.getElementById('pwa-install-banner');
+        if (pwaBanner) {
+          pwaBanner.style.display = 'flex';
+        }
       }
     });
 
     window.addEventListener('appinstalled', () => {
       console.log('[PWA] Application successfully installed');
       this.deferredInstallPrompt = null;
+      localStorage.setItem('pwa-banner-dismissed', 'true');
       const pwaBanner = document.getElementById('pwa-install-banner');
       if (pwaBanner) pwaBanner.style.display = 'none';
       this.showToast("App installed to home screen! 🎉", "success");
     });
+  },
+
+  dismissPWABanner() {
+    localStorage.setItem('pwa-banner-dismissed', 'true');
+    const pwaBanner = document.getElementById('pwa-install-banner');
+    if (pwaBanner) pwaBanner.style.display = 'none';
   },
 
   triggerPWAInstall() {
@@ -49,6 +62,7 @@ const AuraApp = {
           console.log('[PWA] User accepted installation prompt');
         }
         this.deferredInstallPrompt = null;
+        localStorage.setItem('pwa-banner-dismissed', 'true');
         const pwaBanner = document.getElementById('pwa-install-banner');
         if (pwaBanner) pwaBanner.style.display = 'none';
       });
@@ -140,6 +154,11 @@ const AuraApp = {
     const pwaInstallBtn = document.getElementById('btn-pwa-install');
     if (pwaInstallBtn) {
       pwaInstallBtn.addEventListener('click', () => this.triggerPWAInstall());
+    }
+
+    const pwaDismissBtn = document.getElementById('btn-pwa-dismiss');
+    if (pwaDismissBtn) {
+      pwaDismissBtn.addEventListener('click', () => this.dismissPWABanner());
     }
   }
 };

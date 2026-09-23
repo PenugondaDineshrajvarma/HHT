@@ -73,10 +73,22 @@
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-  /* Layout Constrains */
-  --header-height: 72px;
+  /* Layout Constraints */
+  --header-height: 56px;
   --sidebar-width: 260px;
+  --bottom-nav-height: 58px;
+
+  /* Mobile App Native Safe Areas & Touch Target Tokens */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --mobile-touch-target: 44px;
+  --radius-mobile-card: 16px;
+  --radius-sheet: 24px;
+  --shadow-sheet: 0 -10px 30px rgba(0, 0, 0, 0.15);
 }
 
 /* ==========================================================================

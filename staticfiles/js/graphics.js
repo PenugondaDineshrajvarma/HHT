@@ -11,21 +11,20 @@ const AuraGraphics = {
    */
   getLogoSVG(variant = 'full', width = 220, height = 48) {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const primaryColor = isDark ? '#38BDF8' : '#1E293B';
-    const accentColor = '#F59E0B';
+    const accentColor = '#EAB308'; // Rich Golden Amber
     const textColor = isDark ? '#FFFFFF' : '#0F172A';
 
     if (variant === 'icon' || variant === 'app-icon' || variant === 'favicon') {
       return `
-        <svg width="${width}" height="${height}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="64" height="64" rx="16" fill="url(#hh_grad_bg)" />
-          <!-- Left H Pillar -->
-          <path d="M18 16V48H25V35H39V48H46V16H39V28H25V16H18Z" fill="#FFFFFF"/>
-          <!-- Dynamic Center Accent Chevron -->
-          <path d="M25 31L32 24L39 31" stroke="${accentColor}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="32" cy="22" r="3.5" fill="${accentColor}" />
+        <svg width="${width}" height="${height}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto; display: block;">
+          <rect width="64" height="64" rx="16" fill="url(#hh_icon_grad)" />
+          <!-- White Bold H -->
+          <path d="M14 12V52H22V36H42V52H50V12H42V25H22V12H14Z" fill="#FFFFFF"/>
+          <!-- Golden Temple Shikhara / Dome Ornament -->
+          <path d="M26 27C26 19 32 14 32 14C32 14 38 19 38 27Z" fill="${accentColor}"/>
+          <circle cx="32" cy="12" r="2.5" fill="${accentColor}"/>
           <defs>
-            <linearGradient id="hh_grad_bg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+            <linearGradient id="hh_icon_grad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
               <stop stop-color="#2563EB"/>
               <stop offset="1" stop-color="#0F172A"/>
             </linearGradient>
@@ -35,20 +34,21 @@ const AuraGraphics = {
     }
 
     return `
-      <svg width="${width}" height="${height}" viewBox="0 0 260 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Monogram Emblem -->
-        <g transform="translate(4, 4)">
-          <rect width="44" height="44" rx="12" fill="url(#hh_full_bg)" />
-          <!-- Stylized H -->
-          <path d="M12 12V36H17V26H27V36H32V12H27V21H17V12H12Z" fill="#FFFFFF"/>
-          <path d="M17 23.5L22 18.5L27 23.5" stroke="${accentColor}" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="22" cy="17" r="2.5" fill="${accentColor}" />
+      <svg width="${width}" height="${height}" viewBox="0 0 260 52" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; height: auto; display: block;">
+        <!-- Monogram Emblem Container -->
+        <g transform="translate(2, 2)">
+          <rect width="48" height="48" rx="14" fill="url(#hh_full_grad)" />
+          <!-- White Bold H -->
+          <path d="M10 9V39H16V27H32V39H38V9H32V19H16V9H10Z" fill="#FFFFFF"/>
+          <!-- Golden Temple Dome Ornament -->
+          <path d="M19 20.5C19 14 24 10.5 24 10.5C24 10.5 29 14 29 20.5Z" fill="${accentColor}"/>
+          <circle cx="24" cy="9" r="2" fill="${accentColor}"/>
         </g>
         <!-- Brand Typography -->
-        <text x="58" y="28" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="20" fill="${textColor}" letter-spacing="0.5">HARIHARA</text>
-        <text x="58" y="42" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="9.5" fill="${accentColor}" letter-spacing="4">TRAVELS</text>
+        <text x="62" y="27" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-weight="800" font-size="20" fill="${textColor}" letter-spacing="0.5">HARIHARA</text>
+        <text x="62" y="42" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-weight="700" font-size="9.5" fill="${accentColor}" letter-spacing="4">TRAVELS</text>
         <defs>
-          <linearGradient id="hh_full_bg" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+          <linearGradient id="hh_full_grad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
             <stop stop-color="#2563EB"/>
             <stop offset="1" stop-color="#0F172A"/>
           </linearGradient>

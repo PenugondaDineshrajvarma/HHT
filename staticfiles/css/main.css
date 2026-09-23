@@ -61,7 +61,13 @@ a:hover {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 0 1.5rem;
+  }
 }
 
 .flex { display: flex; }
@@ -87,19 +93,19 @@ a:hover {
   position: relative;
   background-color: var(--color-background);
   background-image: 
-    radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 85% 85%, rgba(245, 158, 11, 0.06) 0%, transparent 40%),
-    linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px);
+    radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(245, 158, 11, 0.04) 0%, transparent 40%),
+    linear-gradient(to right, rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
 }
 
 [data-theme="dark"] .aura-vector-bg {
   background-image: 
-    radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 85% 85%, rgba(251, 191, 36, 0.08) 0%, transparent 40%),
-    linear-gradient(to right, rgba(31, 41, 55, 0.5) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(31, 41, 55, 0.5) 1px, transparent 1px);
+    radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(251, 191, 36, 0.05) 0%, transparent 40%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
 }
 
 /* Keyframe Animations */

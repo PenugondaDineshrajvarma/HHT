@@ -253,12 +253,14 @@
   z-index: 1500;
   background: linear-gradient(135deg, #1E293B, #0F172A);
   color: #FFFFFF;
-  padding: 0.65rem 1.25rem;
+  padding: 0.4rem 0.85rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  gap: 0.5rem;
+  width: 100%;
 }
 
 [data-theme="light"] .pwa-install-banner {
@@ -266,13 +268,480 @@
   color: #FFFFFF;
 }
 
-/* Mobile App Viewport & Native Touch Optimizations */
+.pwa-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.pwa-banner-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.pwa-banner-text {
+  min-width: 0;
+}
+
+.pwa-banner-title {
+  font-weight: 700;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pwa-banner-subtitle {
+  font-size: 0.7rem;
+  opacity: 0.88;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pwa-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.pwa-install-btn {
+  padding: 0.3rem 0.65rem !important;
+  font-size: 0.78rem !important;
+  border-radius: var(--radius-full) !important;
+  min-height: 32px !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+}
+
+.pwa-dismiss-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s ease;
+  line-height: 1;
+}
+
+.pwa-dismiss-btn:hover {
+  color: #FFFFFF;
+  opacity: 1;
+}
+
+@media (max-width: 360px) {
+  .pwa-banner-subtitle {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   MOBILE NATIVE APP COMPONENTS & UI PRIMITIVES
+   ========================================================================== */
+
+/* Touch Target Standardizing */
+button, input, select, a, .touch-target {
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch Active Press Ripple / Haptic simulation */
+.mobile-touch-active {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+}
+
+.mobile-touch-active:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Header Navbar Styles */
+.mobile-app-header-container {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 800;
+  box-shadow: var(--shadow-xs);
+  width: 100%;
+}
+
+.navbar-inner {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.75rem;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .navbar-inner {
+    height: 64px;
+    padding: 0 1.5rem;
+  }
+}
+
+.nav-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+@media (min-width: 480px) {
+  .nav-actions-group {
+    gap: 0.5rem;
+  }
+}
+
+.navbar-btn-login {
+  padding: 0.35rem 0.65rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius-full) !important;
+  min-height: 34px !important;
+  flex-shrink: 0;
+}
+
+.navbar-btn-signup {
+  padding: 0.35rem 0.65rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius-full) !important;
+  min-height: 34px !important;
+  flex-shrink: 0;
+}
+
+@media (max-width: 360px) {
+  .navbar-inner {
+    padding: 0 0.5rem;
+    gap: 0.25rem;
+  }
+  .navbar-btn-login, .navbar-btn-signup {
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    min-height: 32px !important;
+  }
+}
+
+/* Mobile Bottom Sheet Drawer */
+.mobile-bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: var(--color-surface);
+  border-top-left-radius: var(--radius-sheet);
+  border-top-right-radius: var(--radius-sheet);
+  padding: 1.25rem 1.25rem calc(1.25rem + var(--safe-area-bottom, 0px));
+  box-shadow: var(--shadow-sheet);
+  z-index: 950;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  border-top: 1px solid var(--color-border);
+}
+
+.mobile-bottom-sheet.open {
+  transform: translateY(0);
+}
+
+.mobile-sheet-handle {
+  width: 44px;
+  height: 5px;
+  background-color: var(--color-border-strong);
+  border-radius: 99px;
+  margin: 0 auto 1.25rem auto;
+  cursor: grab;
+  opacity: 0.6;
+}
+
+/* Mobile Segmented Control (Tabs) */
+.mobile-segmented-control {
+  display: flex;
+  background: var(--color-surface-hover);
+  border-radius: var(--radius-full);
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.mobile-segment-tab {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-segment-tab.active {
+  background: var(--color-brand-blue);
+  color: #FFFFFF;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Mobile Interactive Search Pill Bar */
+.mobile-search-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 0.85rem 1.15rem;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mobile-search-pill:hover, .mobile-search-pill:focus-within {
+  border-color: var(--color-brand-blue);
+  box-shadow: var(--shadow-md), 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.search-pill-icon {
+  font-size: 1.25rem;
+  color: var(--color-brand-blue);
+  flex-shrink: 0;
+}
+
+.search-pill-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-pill-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.search-pill-subtitle {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.search-pill-cta {
+  font-size: 0.78rem;
+  background: var(--color-brand-blue-subtle);
+  color: var(--color-brand-blue);
+  font-weight: 700;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Saved Locations Grid */
+.saved-locations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .saved-locations-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.mobile-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mobile-chip:hover, .mobile-chip:active {
+  background: var(--color-brand-blue-subtle);
+  border-color: var(--color-brand-blue);
+  color: var(--color-brand-blue);
+}
+
+.chip-icon {
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Services Grid & Cards */
+.service-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .service-cards-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+}
+
+.service-card-tile {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-mobile-card);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 115px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.service-card-tile:hover, .service-card-tile:active {
+  border-color: var(--color-brand-blue);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.service-card-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.service-icon-city {
+  background: var(--color-brand-blue-subtle);
+  color: var(--color-brand-blue);
+}
+
+.service-icon-chauffeur {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent-dark);
+}
+
+.service-icon-intercity {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.service-icon-rental {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.service-card-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--color-text-primary);
+  line-height: 1.25;
+}
+
+.service-card-desc {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+}
+
+/* Mobile Fullscreen Map & Wrapper Components */
+.mobile-booking-wrapper {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - var(--header-height, 56px) - var(--bottom-nav-height, 58px));
+  min-height: 450px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.mobile-fullscreen-map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+#aura-live-trip-map, #aura-booking-map {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  display: block;
+}
+
+/* Mobile App Screen Wrapper */
+.mobile-app-shell {
+  max-width: 520px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--color-background);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Mobile Viewport Optimizations */
 @media (max-width: 768px) {
   body {
     -webkit-touch-callout: none;
+    overscroll-behavior-y: none;
   }
   .container {
     padding-left: 1rem;
     padding-right: 1rem;
   }
 }
+

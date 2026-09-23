@@ -34,6 +34,39 @@ const AuraMap = {
       // Add Zoom Control to Top Right
       L.control.zoom({ position: 'topright' }).addTo(map);
 
+      // Add Custom Live GPS Button to Top Right on Map
+      const locateControl = L.control({ position: 'topright' });
+      locateControl.onAdd = function() {
+        const btn = L.DomUtil.create('button', 'aura-map-locate-btn');
+        btn.innerHTML = '📍';
+        btn.title = 'Get My Live Location';
+        btn.style.cssText = 'background:#FFF; border:2px solid rgba(0,0,0,0.2); border-radius:6px; width:34px; height:34px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-top:6px; color:#2563EB; font-weight:bold; transition:all 0.2s;';
+        btn.onclick = function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+          AuraMap.fetchUserLiveLocation(containerId, (data) => {
+            const pickupAddr = document.getElementById('pickup_address');
+            const pickupLat = document.getElementById('pickup_latitude');
+            const pickupLon = document.getElementById('pickup_longitude');
+            if (pickupAddr) pickupAddr.value = data.address;
+            if (pickupLat) pickupLat.value = data.lat;
+            if (pickupLon) pickupLon.value = data.lon;
+
+            const origAddr = document.getElementById('origin_address');
+            const origLat = document.getElementById('origin_lat');
+            const origLon = document.getElementById('origin_lon');
+            if (origAddr) origAddr.value = data.address;
+            if (origLat) origLat.value = data.lat;
+            if (origLon) origLon.value = data.lon;
+
+            if (window.AuraBooking) window.AuraBooking.updateRoute(data.coords, null);
+          });
+        };
+        return btn;
+      };
+      locateControl.addTo(map);
+
+
       this.instances[containerId] = {
         map: map,
         markers: {},
@@ -67,14 +100,27 @@ const AuraMap = {
    * Fetch Live Browser Geolocation, center map, and return address
    */
   fetchUserLiveLocation(containerId, callback) {
-    if (window.AuraApp) AuraApp.showToast("Fetching your live GPS location...", "info");
+    const notify = (msg, type) => {
+      if (window.AuraApp && typeof window.AuraApp.showToast === 'function') {
+        window.AuraApp.showToast(msg, type);
+      } else {
+        console.log(`[AuraMap] ${type}: ${msg}`);
+      }
+    };
 
-    const onLocationSuccess = async (lat, lon) => {
+    notify("Requesting your live location...", "info");
+
+    let isHandled = false;
+
+    const onSuccess = async (lat, lon) => {
+      if (isHandled) return;
+      isHandled = true;
       const coords = [lat, lon];
+
       const instance = this.instances[containerId];
       if (instance && instance.map) {
         instance.map.flyTo(coords, 14);
-        
+
         if (!instance.markers.userGps) {
           const userIcon = L.divIcon({
             className: 'aura-user-gps-pin',
@@ -88,42 +134,54 @@ const AuraMap = {
       }
 
       const address = await this.reverseGeocode(lat, lon);
-      if (window.AuraApp) AuraApp.showToast("Live location retrieved!", "success");
+      notify("Live location updated!", "success");
 
       if (callback) {
         callback({ lat, lon, coords, address });
       }
     };
 
+    const tryIPFallback = async () => {
+      if (isHandled) return;
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.latitude && data.longitude) {
+            onSuccess(data.latitude, data.longitude);
+            return;
+          }
+        }
+      } catch (e) {}
+      if (!isHandled) {
+        notify("Could not detect location automatically. Please select on map or type address.", "warning");
+      }
+    };
+
+    // Safety fallback timer for browser permission prompt delays
+    const fallbackTimer = setTimeout(() => {
+      if (!isHandled) tryIPFallback();
+    }, 3500);
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => onLocationSuccess(pos.coords.latitude, pos.coords.longitude),
-        (err) => {
-          console.warn("GPS High Accuracy timeout/error, trying low accuracy...", err);
-          navigator.geolocation.getCurrentPosition(
-            (pos) => onLocationSuccess(pos.coords.latitude, pos.coords.longitude),
-            async () => {
-              try {
-                const res = await fetch('https://ipapi.co/json/');
-                if (res.ok) {
-                  const data = await res.json();
-                  if (data.latitude && data.longitude) {
-                    onLocationSuccess(data.latitude, data.longitude);
-                    return;
-                  }
-                }
-              } catch (e) {}
-              if (window.AuraApp) AuraApp.showToast("Could not access GPS. Please click on map or type address.", "warning");
-            },
-            { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
-          );
+        (pos) => {
+          clearTimeout(fallbackTimer);
+          onSuccess(pos.coords.latitude, pos.coords.longitude);
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        (err) => {
+          clearTimeout(fallbackTimer);
+          console.warn("GPS lookup failed:", err);
+          tryIPFallback();
+        },
+        { enableHighAccuracy: true, timeout: 3000, maximumAge: 0 }
       );
     } else {
-      if (window.AuraApp) AuraApp.showToast("Geolocation is not supported by your browser.", "warning");
+      clearTimeout(fallbackTimer);
+      tryIPFallback();
     }
   },
+
 
 
   /**
@@ -148,15 +206,14 @@ const AuraMap = {
   },
 
   /**
-   * Free Routing Engine via OSRM (Open Source Routing Machine)
+   * Free Routing Engine via OSRM (Open Source Routing Machine) with Turn Steps
    */
   async getOSRMRoute(pickupCoords, dropCoords) {
-    // Coords are [lat, lon]
     const pLat = pickupCoords[0], pLon = pickupCoords[1];
     const dLat = dropCoords[0], dLon = dropCoords[1];
     
-    // OSRM expects lon,lat format
-    const url = `https://router.project-osrm.org/route/v1/driving/${pLon},${pLat};${dLon},${dLat}?overview=full&geometries=geojson`;
+    // OSRM expects lon,lat format with steps=true for turn-by-turn navigation
+    const url = `https://router.project-osrm.org/route/v1/driving/${pLon},${pLat};${dLon},${dLat}?overview=full&geometries=geojson&steps=true`;
 
     try {
       const response = await fetch(url);
@@ -164,10 +221,27 @@ const AuraMap = {
       const data = await response.json();
       if (data.routes && data.routes.length > 0) {
         const route = data.routes[0];
-        // Convert coordinates from [lon, lat] back to Leaflet's [lat, lon]
         const latLngs = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+        
+        // Extract turn-by-turn steps
+        let steps = [];
+        if (route.legs && route.legs[0] && route.legs[0].steps) {
+          steps = route.legs[0].steps.map(s => {
+            const m = s.maneuver || {};
+            return {
+              type: m.type || 'straight',
+              modifier: m.modifier || '',
+              name: s.name || 'Road',
+              distanceM: Math.round(s.distance || 0),
+              durationS: Math.round(s.duration || 0),
+              location: m.location ? [m.location[1], m.location[0]] : null
+            };
+          });
+        }
+
         return {
           latLngs: latLngs,
+          steps: steps,
           distanceKm: parseFloat((route.distance / 1000).toFixed(2)),
           durationMins: Math.round(route.duration / 60)
         };
@@ -176,38 +250,56 @@ const AuraMap = {
       console.warn("OSRM Route fetching failed, falling back to direct line:", err);
     }
 
-    // Fallback direct distance calculation
     const fallbackDist = this.calculateHaversineDistance(pLat, pLon, dLat, dLon);
     return {
       latLngs: [pickupCoords, dropCoords],
+      steps: [
+        { type: 'depart', modifier: 'straight', name: 'Pickup Location', distanceM: 0, durationS: 0, location: pickupCoords },
+        { type: 'arrive', modifier: 'straight', name: 'Destination Dropoff', distanceM: Math.round(fallbackDist * 1000), durationS: Math.round(fallbackDist * 150), location: dropCoords }
+      ],
       distanceKm: parseFloat(fallbackDist.toFixed(2)),
       durationMins: Math.round(fallbackDist * 2.5)
     };
   },
 
   /**
-   * Render real road polyline and pins onto Leaflet Map
+   * Render real street navigation route, glow line, and pins onto Leaflet Map
    */
   async renderRoadRoute(containerId, pickupCoords, dropCoords) {
     const instance = this.instances[containerId];
     if (!instance || !instance.map) return null;
 
-    // Clear existing markers & route
+    // Clear existing layers
     if (instance.markers.pickup) instance.map.removeLayer(instance.markers.pickup);
     if (instance.markers.drop) instance.map.removeLayer(instance.markers.drop);
+    if (instance.routeGlow) instance.map.removeLayer(instance.routeGlow);
     if (instance.routeLine) instance.map.removeLayer(instance.routeLine);
+    if (instance.traversedLine) instance.map.removeLayer(instance.traversedLine);
 
-    // Custom Pickup & Drop Pin Icons
+    // Custom Styled Pickup Pin with Label Pill
     const pickupIcon = L.divIcon({
       className: 'aura-map-pin-pickup',
-      html: `<div style="background:#2563EB; width:22px; height:22px; border-radius:50%; border:3px solid #FFF; box-shadow:0 0 12px rgba(37,99,235,0.6);"></div>`,
-      iconSize: [22, 22]
+      html: `
+        <div style="display:flex; flex-direction:column; align-items:center;">
+          <div style="background:#2563EB; color:#FFF; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-bottom:2px;">📍 Pickup</div>
+          <div style="background:#2563EB; width:18px; height:18px; border-radius:50%; border:3px solid #FFF; box-shadow:0 0 12px rgba(37,99,235,0.8);"></div>
+        </div>
+      `,
+      iconSize: [60, 42],
+      iconAnchor: [30, 42]
     });
 
+    // Custom Styled Dropoff Pin with Label Pill
     const dropIcon = L.divIcon({
       className: 'aura-map-pin-drop',
-      html: `<div style="background:#F59E0B; width:22px; height:22px; border-radius:50%; border:3px solid #FFF; box-shadow:0 0 12px rgba(245,158,11,0.6);"></div>`,
-      iconSize: [22, 22]
+      html: `
+        <div style="display:flex; flex-direction:column; align-items:center;">
+          <div style="background:#F59E0B; color:#0F172A; font-size:10px; font-weight:700; padding:2px 6px; border-radius:10px; white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,0.2); margin-bottom:2px;">🏁 Dropoff</div>
+          <div style="background:#F59E0B; width:18px; height:18px; border-radius:50%; border:3px solid #FFF; box-shadow:0 0 12px rgba(245,158,11,0.8);"></div>
+        </div>
+      `,
+      iconSize: [60, 42],
+      iconAnchor: [30, 42]
     });
 
     instance.markers.pickup = L.marker(pickupCoords, { icon: pickupIcon }).addTo(instance.map);
@@ -216,20 +308,48 @@ const AuraMap = {
     // Fetch OSRM Road Route
     const routeData = await this.getOSRMRoute(pickupCoords, dropCoords);
 
-    // Draw Smooth Polyline along Streets
-    instance.routeLine = L.polyline(routeData.latLngs, {
-      color: '#2563EB',
-      weight: 5,
-      opacity: 0.85,
+    // Draw Outer Navigation Glow Polyline
+    instance.routeGlow = L.polyline(routeData.latLngs, {
+      color: '#1D4ED8',
+      weight: 10,
+      opacity: 0.35,
       lineCap: 'round',
       lineJoin: 'round'
     }).addTo(instance.map);
 
-    // Smoothly fit bounds
+    // Draw Primary Bright Blue Navigation Route Polyline
+    instance.routeLine = L.polyline(routeData.latLngs, {
+      color: '#2563EB',
+      weight: 5,
+      opacity: 0.95,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(instance.map);
+
+    // Prepare Traversed Route Layer (faded gray for driven path)
+    instance.traversedLine = L.polyline([], {
+      color: '#94A3B8',
+      weight: 5,
+      opacity: 0.6,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }).addTo(instance.map);
+
+    // Smoothly fit map bounds
     const bounds = L.latLngBounds([pickupCoords, dropCoords]);
     instance.map.fitBounds(bounds, { padding: [60, 60] });
 
     return routeData;
+  },
+
+  updateNavigationProgress(containerId, activeIndex, latLngs) {
+    const instance = this.instances[containerId];
+    if (!instance || !instance.map || !latLngs) return;
+
+    if (instance.traversedLine && activeIndex > 0) {
+      const drivenCoords = latLngs.slice(0, activeIndex + 1);
+      instance.traversedLine.setLatLngs(drivenCoords);
+    }
   },
 
   setMarkers(containerId, pickupCoords, dropCoords) {
@@ -243,8 +363,16 @@ const AuraMap = {
     if (!instance.markers.driver) {
       const driverIcon = L.divIcon({
         className: 'aura-driver-marker',
-        html: `<div style="background:#0F172A; color:#FFF; padding:6px 12px; border-radius:12px; font-weight:bold; font-size:12px; border:2px solid #38BDF8; box-shadow:0 4px 12px rgba(0,0,0,0.3);">🚗 Driver</div>`,
-        iconSize: [84, 30]
+        html: `
+          <div style="position:relative; display:flex; align-items:center; justify-content:center;">
+            <div class="aura-driver-marker-pulse"></div>
+            <div style="background:#0F172A; color:#FFF; padding:5px 10px; border-radius:20px; font-weight:700; font-size:11px; border:2px solid #38BDF8; box-shadow:0 4px 14px rgba(0,0,0,0.35); display:flex; align-items:center; gap:4px; white-space:nowrap; z-index:2;">
+              <span>🚖</span> <span>En Route</span>
+            </div>
+          </div>
+        `,
+        iconSize: [100, 36],
+        iconAnchor: [50, 18]
       });
       instance.markers.driver = L.marker(driverCoords, { icon: driverIcon }).addTo(instance.map);
     } else {
